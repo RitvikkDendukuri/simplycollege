@@ -26,7 +26,6 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -484,12 +483,14 @@ def similar_custom(profile: CustomProfile):
 
 STATIC_DIR = Path(__file__).resolve().parent / "collegebase-frontend" / "dist"
 
-if STATIC_DIR.is_dir():
-    app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="static-assets")
 
-    @app.get("/{full_path:path}")
-    def serve_spa(full_path: str):
-        file = STATIC_DIR / full_path
-        if file.is_file():
-            return FileResponse(file)
-        return FileResponse(STATIC_DIR / "index.html")
+@app.get("/{full_path:path}")
+def serve_spa(full_path: str):
+    if not STATIC_DIR.is_dir():
+        return {"error": "Frontend not built. Run: cd collegebase-frontend && npm run build"}
+    # Serve static assets (JS, CSS, images)
+    file = STATIC_DIR / full_path
+    if file.is_file() and ".." not in full_path:
+        return FileResponse(file)
+    # All other routes get index.html (SPA client-side routing)
+    return FileResponse(STATIC_DIR / "index.html")
