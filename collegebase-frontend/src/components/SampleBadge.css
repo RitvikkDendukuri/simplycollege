@@ -1,0 +1,36 @@
+.sample-badge {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  min-width: 90px;
+}
+
+.sample-badge.unreliable {
+  border-color: var(--warn);
+  opacity: 0.75;
+}
+
+.badge-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.badge-label {
+  font-size: 11px;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.badge-n {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+
+.badge-warn {
+  color: var(--warn);
+  margin-left: 4px;
+}

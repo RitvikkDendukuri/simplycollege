@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.db
+.env
+collegebase-frontend/node_modules/
+collegebase-frontend/dist/
+desktop.ini

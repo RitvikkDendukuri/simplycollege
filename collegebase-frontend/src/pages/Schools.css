@@ -1,0 +1,208 @@
+/* Schools.css */
+.school-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 16px;
+}
+
+.school-table-header h2 { margin: 0; }
+
+.school-table-wrap { overflow-x: auto; }
+
+.school-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.school-table th {
+  background: var(--surface2);
+  padding: 8px 12px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-sub);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.school-table th.left, .school-table td.left { text-align: left; }
+.school-table th.sorted { color: var(--accent); }
+
+.school-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+.school-table tbody tr { cursor: pointer; transition: background 0.1s; }
+.school-table tbody tr:hover { background: var(--surface2); }
+.school-table .selected-row { background: var(--surface2); border-left: 3px solid var(--accent); }
+
+.unreliable-row { opacity: 0.6; }
+.unreliable { color: var(--warn); font-size: 11px; }
+
+.empty-row { text-align: center; color: var(--text-sub); padding: 24px; }
+
+.search-box {
+  padding: 6px 12px;
+  min-width: 200px;
+}
+
+.school-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.browse-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.browse-btn:hover { background: var(--accent-hover); }
+
+.browse-btn-sm {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.browse-btn-sm:hover { background: var(--accent-hover); }
+
+/* Floating popup */
+.school-popup {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  z-index: 50;
+}
+
+.school-popup h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  padding-right: 24px;
+}
+
+.popup-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-sub);
+  padding: 2px 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.popup-close:hover { color: var(--danger); }
+
+.popup-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.popup-stats div { color: var(--text-sub); }
+
+.popup-browse { width: 100%; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.detail-stat {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+}
+
+.detail-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.detail-label {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-top: 4px;
+}
+
+.accepted-text { color: var(--success); }
+.rejected-text { color: var(--danger); }
+
+.school-table th.center, .school-table td.center { text-align: center; width: 40px; }
+
+/* Compare table */
+.compare-section { margin-bottom: 20px; }
+
+.compare-table-wrap { overflow-x: auto; }
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.compare-table th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  max-width: 180px;
+  word-wrap: break-word;
+}
+
+.compare-table td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.compare-label {
+  text-align: left !important;
+  font-weight: 600;
+  color: var(--text-sub);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.compare-best { color: var(--success); font-weight: 700; }
+.compare-worst { color: var(--danger); font-weight: 700; }

@@ -1,0 +1,97 @@
+/* Saved.css */
+.saved-actions {
+  margin-bottom: 16px;
+}
+
+.saved-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.saved-card {
+  display: flex;
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.1s;
+}
+
+.saved-card:hover { border-color: var(--accent); }
+
+.saved-card-main {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.saved-id {
+  font-weight: 700;
+  color: var(--text-sub);
+  min-width: 40px;
+}
+
+.saved-tiers { display: flex; gap: 4px; margin-left: auto; }
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-sub);
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.remove-btn:hover { color: var(--danger); }
+
+/* Compare table */
+.compare-wrap { overflow-x: auto; }
+
+.profile-compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.profile-compare th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  text-align: center;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.profile-compare th:hover { color: var(--accent); }
+
+.profile-compare td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.compare-label {
+  text-align: left !important;
+  font-weight: 600;
+  color: var(--text-sub);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.compare-schools {
+  text-align: left !important;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.compare-header { color: var(--accent); }
+
+.compare-best { color: var(--success); font-weight: 700; }
+.compare-worst { color: var(--danger); font-weight: 700; }

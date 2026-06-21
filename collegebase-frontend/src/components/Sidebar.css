@@ -1,0 +1,86 @@
+/* Sidebar.css */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.sidebar-title {
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-sub);
+}
+
+.reset-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-sub);
+  font-size: 11px;
+  padding: 2px 8px;
+}
+.reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.chip {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.filter-section {
+  margin-bottom: 16px;
+}
+
+.filter-section label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-sub);
+  margin-bottom: 5px;
+}
+
+.filter-section select,
+.filter-section input {
+  width: 100%;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.range-row input { width: 70px; }
+.range-row span { color: var(--text-sub); }
+
+.toggles { display: flex; flex-direction: column; gap: 8px; }
+
+.toggle-label {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  color: var(--text) !important;
+  cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"] {
+  width: auto;
+  accent-color: var(--accent);
+}

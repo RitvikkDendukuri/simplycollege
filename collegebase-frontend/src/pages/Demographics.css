@@ -1,0 +1,57 @@
+/* Demographics.css */
+.race-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.race-view-toggle label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-sub);
+}
+
+.race-view-toggle select {
+  min-width: 200px;
+}
+
+.demo-table-wrap { overflow-x: auto; }
+
+.demo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.demo-table th {
+  background: var(--surface2);
+  padding: 8px 12px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-sub);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.demo-table th.left, .demo-table td.left { text-align: left; }
+
+.demo-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+.demo-table tbody tr { transition: background 0.1s; }
+.demo-table tbody tr.clickable-row { cursor: pointer; }
+.demo-table tbody tr:hover { background: var(--surface2); }
+
+.unreliable-row { opacity: 0.6; }
+.unreliable { color: var(--warn); }
