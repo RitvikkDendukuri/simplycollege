@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../api";
 import { usePageTitle } from "../utils";
+import SampleBadge from "../components/SampleBadge";
 import ProfileDrawer from "../components/ProfileDrawer";
 import "./Similar.css";
 
@@ -9,6 +10,7 @@ export default function Similar() {
   const [inputId, setInputId] = useState("");
   const [k, setK] = useState(5);
   const [results, setResults] = useState(null);
+  const [outcomes, setOutcomes] = useState(null);
   const [anchor, setAnchor] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -31,6 +33,7 @@ export default function Similar() {
     setLoading(true);
     setError(null);
     setResults(null);
+    setOutcomes(null);
     setAnchor(null);
     try {
       const [anchorData, simData] = await Promise.all([
@@ -39,6 +42,7 @@ export default function Similar() {
       ]);
       setAnchor(anchorData);
       setResults(simData.neighbors);
+      setOutcomes(simData.outcomes);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -60,6 +64,7 @@ export default function Similar() {
     setLoading(true);
     setError(null);
     setResults(null);
+    setOutcomes(null);
     setAnchor(null);
     try {
       const data = await api.similarCustom({
@@ -72,6 +77,7 @@ export default function Similar() {
         num_ecs: e, num_awards: a, stem_major: stem,
       });
       setResults(data.neighbors);
+      setOutcomes(data.outcomes);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -94,11 +100,11 @@ export default function Similar() {
 
       <div className="mode-tabs">
         <button className={`mode-tab ${mode === "custom" ? "active" : ""}`}
-          onClick={() => { setMode("custom"); setResults(null); setAnchor(null); setError(null); }}>
+          onClick={() => { setMode("custom"); setResults(null); setOutcomes(null); setAnchor(null); setError(null); }}>
           Enter my stats
         </button>
         <button className={`mode-tab ${mode === "id" ? "active" : ""}`}
-          onClick={() => { setMode("id"); setResults(null); setAnchor(null); setError(null); }}>
+          onClick={() => { setMode("id"); setResults(null); setOutcomes(null); setAnchor(null); setError(null); }}>
           Look up by ID
         </button>
       </div>
@@ -187,6 +193,23 @@ export default function Similar() {
             <ProfileRow p={anchor} />
           )}
         </div>
+      )}
+
+      {outcomes && outcomes.cohort_n > 0 && (
+        <section className="outcomes-card">
+          <h2>How applicants like this did</h2>
+          <p className="section-sub">
+            Acceptance rates across the {outcomes.cohort_n} most similar profiles — the
+            honest read on "your odds." Each rate carries its sample size and 95% CI.
+            Numbers can't capture EC/award <em>quality</em>, so open the profiles below
+            to see what these applicants actually did.
+          </p>
+          <div className="outcomes-badges">
+            {["t5","t10","t20","t50"].map((t) => (
+              <SampleBadge key={t} rate={outcomes.tiers[t]} label={`${t.toUpperCase()} accept`} />
+            ))}
+          </div>
+        </section>
       )}
 
       {results && (
