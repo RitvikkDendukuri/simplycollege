@@ -29,16 +29,13 @@ def _check_rate_limit(client_ip: str):
 
 app = FastAPI(title="CollegeBase API", version="1.0.0")
 
-ALLOWED_ORIGINS = os.getenv(
-    "CORS_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,https://simplycollege.onrender.com"
-).split(",")
+ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -83,6 +80,23 @@ def make_rate(numerator: int, denominator: int) -> Rate:
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/debug")
+def debug():
+    db_path = db.DB_PATH
+    exists = Path(db_path).exists()
+    size = Path(db_path).stat().st_size if exists else 0
+    count = 0
+    if exists:
+        try:
+            import sqlite3
+            conn = sqlite3.connect(str(db_path))
+            count = conn.execute("SELECT COUNT(*) FROM applicants").fetchone()[0]
+            conn.close()
+        except Exception as e:
+            return {"db_path": str(db_path), "exists": exists, "error": str(e)}
+    return {"db_path": str(db_path), "exists": exists, "size_bytes": size, "applicant_count": count}
 
 
 @app.get("/applicants")
