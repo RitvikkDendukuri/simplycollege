@@ -8,6 +8,7 @@ import { api } from "../api";
 import { useFilters } from "../context/FilterContext";
 import { rankClass, usePageTitle } from "../utils";
 import { MIN_RELIABLE_N } from "../constants";
+import ProfileDrawer from "../components/ProfileDrawer";
 import "./Schools.css";
 
 const MIN_N = MIN_RELIABLE_N;
@@ -20,6 +21,7 @@ export default function Schools() {
   const [sortDir, setSortDir] = useState("desc");
   const [selected, setSelected] = useState(null);
   const [compare, setCompare] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
   const { debouncedFilters: filters, update, reset, hideUnreliable } = useFilters();
   const navigate = useNavigate();
 
@@ -203,11 +205,36 @@ export default function Schools() {
             <div>ECs: {selectedSchool.avg_ecs?.toFixed(1) ?? "—"}</div>
             <div>STEM: {selectedSchool.stem_share != null ? (selectedSchool.stem_share * 100).toFixed(0) + "%" : "—"}</div>
           </div>
-          <button className="browse-btn popup-browse" onClick={() => browseSchool(selectedSchool.school)}>
-            Browse accepted profiles
-          </button>
+
+          <ApplicantList title="Accepted" profiles={selectedSchool.accepted_profiles || []}
+            className="accepted-list" onSelect={setSelectedId} />
+          <ApplicantList title="Rejected" profiles={selectedSchool.rejected_profiles || []}
+            className="rejected-list" onSelect={setSelectedId} />
         </div>
       )}
+
+      <ProfileDrawer applicantId={selectedId} onClose={() => setSelectedId(null)} />
+    </div>
+  );
+}
+
+function ApplicantList({ title, profiles, className, onSelect }) {
+  if (!profiles.length) return null;
+  return (
+    <div className={`school-applicant-list ${className}`}>
+      <h4>{title} ({profiles.length})</h4>
+      <div className="school-applicant-grid">
+        {profiles.map((p) => (
+          <button key={p.applicant_id} className="school-applicant-row"
+            onClick={() => onSelect(p.applicant_id)}>
+            <span className="sa-id">#{p.applicant_id}</span>
+            <span className="sa-stat">{p.gpa_unweighted?.toFixed(2) ?? "—"} GPA</span>
+            <span className="sa-stat">{p.sat_equivalent?.toFixed(0) ?? "—"} SAT</span>
+            <span className="sa-stat">{p.num_ecs ?? 0} EC</span>
+            <span className="sa-major">{(p.majors || []).join(", ") || "—"}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

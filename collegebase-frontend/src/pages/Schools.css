@@ -105,7 +105,9 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 340px;
+  width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -228,6 +230,55 @@
 .compare-best { color: var(--success); font-weight: 700; }
 .compare-worst { color: var(--danger); font-weight: 700; }
 
+.school-applicant-list {
+  margin-top: 14px;
+}
+
+.school-applicant-list h4 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.accepted-list h4 { color: var(--success); }
+.rejected-list h4 { color: var(--danger); }
+
+.school-applicant-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.school-applicant-row {
+  display: grid;
+  grid-template-columns: 50px 70px 70px 40px 1fr;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 12px;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.school-applicant-row:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.sa-id { font-weight: 700; color: var(--accent); }
+.sa-stat { color: var(--text-sub); white-space: nowrap; }
+.sa-major { color: var(--text-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 @media (max-width: 768px) {
   .school-table-header {
     flex-direction: column;
@@ -247,7 +298,12 @@
     right: 12px;
     left: 12px;
     width: auto;
+    max-height: 70vh;
   }
+  .school-applicant-row {
+    grid-template-columns: 44px 60px 60px 1fr;
+  }
+  .school-applicant-row .sa-major { display: none; }
   .compare-table th,
   .compare-table td {
     padding: 8px 10px;

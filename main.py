@@ -328,6 +328,20 @@ def school_stats(
         rej = data["rejected"]
         total = len(acc) + len(rej)
         ci_low, ci_high = wilson_interval(len(acc), total)
+        def _brief(profiles):
+            return [
+                {
+                    "applicant_id": p["applicant_id"],
+                    "gpa_unweighted": p.get("gpa_unweighted"),
+                    "sat_equivalent": p.get("sat_equivalent"),
+                    "num_ecs": p.get("num_ecs"),
+                    "num_awards": p.get("num_awards"),
+                    "majors": p.get("majors") or [],
+                    "stem_major": p.get("stem_major"),
+                }
+                for p in profiles
+            ]
+
         result.append({
             "school": name,
             "accepted": len(acc),
@@ -344,6 +358,8 @@ def school_stats(
             "stem_share": round(
                 sum(1 for a in acc if a["stem_major"]) / len(acc), 4
             ) if acc else None,
+            "accepted_profiles": _brief(acc),
+            "rejected_profiles": _brief(rej),
         })
     return {"schools": result}
 
