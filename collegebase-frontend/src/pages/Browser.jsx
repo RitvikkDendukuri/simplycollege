@@ -5,10 +5,18 @@ import { usePageTitle } from "../utils";
 import ProfileDrawer from "../components/ProfileDrawer";
 import "./Browser.css";
 
+function gpa(p) {
+  return p.gpa_unweighted ?? p.gpa_weighted ?? null;
+}
+
 const COLS = [
   { key: "applicant_id", label: "#" },
-  { key: "gpa_unweighted", label: "GPA (UW)" },
-  { key: "gpa_weighted", label: "GPA (W)" },
+  { key: "gpa", label: "GPA", value: gpa, render: (_, p) => {
+    const v = gpa(p);
+    if (v == null) return "—";
+    const isWeighted = p.gpa_unweighted == null && p.gpa_weighted != null;
+    return isWeighted ? `${v.toFixed(2)}*` : v.toFixed(2);
+  }},
   { key: "sat_equivalent", label: "SAT Eq" },
   { key: "majors", label: "Majors", render: (v) => v?.join(", ") || "—" },
   { key: "stem_major", label: "STEM", render: (v) => v ? "✓" : "" },
@@ -64,7 +72,9 @@ export default function Browser() {
   });
 
   const sorted = [...visible].sort((a, b) => {
-    let av = a[sortKey], bv = b[sortKey];
+    const col = COLS.find((c) => c.key === sortKey);
+    let av = col?.value ? col.value(a) : a[sortKey];
+    let bv = col?.value ? col.value(b) : b[sortKey];
     if (Array.isArray(av)) av = av.join();
     if (Array.isArray(bv)) bv = bv.join();
     if (av == null) return 1;
@@ -78,13 +88,12 @@ export default function Browser() {
   }
 
   function exportCsv(rows) {
-    const headers = ["ID","GPA_UW","GPA_W","SAT_Eq","Majors","STEM","ECs","Awards","Accepted","T20","T5"];
+    const headers = ["ID","GPA","SAT_Eq","Majors","STEM","ECs","Awards","Accepted","T20","T5"];
     const csvRows = [headers.join(",")];
     rows.forEach((p) => {
       csvRows.push([
         p.applicant_id,
-        p.gpa_unweighted ?? "",
-        p.gpa_weighted ?? "",
+        gpa(p) ?? "",
         p.sat_equivalent ?? "",
         `"${(p.majors || []).join("; ")}"`,
         p.stem_major ? "Yes" : "No",
@@ -148,7 +157,7 @@ export default function Browser() {
                     onClick={() => setSelectedId(p.applicant_id)}>
                     {COLS.map((col) => (
                       <td key={col.key}>
-                        {col.render ? col.render(p[col.key]) : (p[col.key] ?? "—")}
+                        {col.render ? col.render(p[col.key], p) : (p[col.key] ?? "—")}
                       </td>
                     ))}
                   </tr>
