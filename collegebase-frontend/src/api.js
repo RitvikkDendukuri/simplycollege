@@ -44,4 +44,8 @@ export const api = {
 
   schools: (filters = {}) => get("/schools" + qs(filters)),
   demographics: (filters = {}) => get("/demographics" + qs(filters)),
+
+  batchApplicants: (ids) => post("/applicants/batch", { ids }),
+  archetypes: (view = "detailed", filters = {}) =>
+    get("/archetypes" + qs({ view, ...filters })),
 };

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { api } from "../api";
+import { useDebounce } from "../utils";
 
 const FilterContext = createContext(null);
 
@@ -35,6 +36,8 @@ export function FilterProvider({ children }) {
 
   const reset = () => setFilters(DEFAULT_FILTERS);
 
+  const debouncedFilters = useDebounce(filters, 300);
+
   // Active filter chips for display
   const activeChips = Object.entries(filters).flatMap(([k, v]) => {
     if (!v || v === "") return [];
@@ -59,7 +62,7 @@ export function FilterProvider({ children }) {
   });
 
   return (
-    <FilterContext.Provider value={{ filters, update, reset, options, activeChips, hideUnreliable, setHideUnreliable }}>
+    <FilterContext.Provider value={{ filters, debouncedFilters, setFilters, update, reset, options, activeChips, hideUnreliable, setHideUnreliable }}>
       {children}
     </FilterContext.Provider>
   );
