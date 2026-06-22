@@ -24,7 +24,6 @@
   box-shadow: var(--shadow-md);
 }
 
-/* dim small-sample archetypes; full opacity on hover so they stay usable */
 .archetype-card.unreliable-card {
   opacity: 0.55;
   border-style: dashed !important;

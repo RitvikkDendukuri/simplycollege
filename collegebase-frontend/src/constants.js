@@ -16,7 +16,6 @@ export const TIER_LABELS = {
   t50_accepted: "T50",
 };
 
-// Wilson 95% CI, mirrors the backend's version. [low, high] or [null, null] at n=0.
 export function wilsonInterval(numerator, denominator, z = 1.96) {
   if (denominator === 0) return [null, null];
   const p = numerator / denominator;

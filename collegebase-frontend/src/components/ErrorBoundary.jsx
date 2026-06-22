@@ -1,7 +1,5 @@
 import { Component } from "react";
 
-// Catches a page crash so one broken page doesn't take down the whole app.
-// Has to be a class — React has no hook version of this.
 export default class ErrorBoundary extends Component {
   state = { error: null };
 

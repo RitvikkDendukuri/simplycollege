@@ -160,7 +160,6 @@ function RateBar({ data, tier }) {
   );
 }
 
-// coarser bins so each grid cell has a shot at a usable sample size
 const HEATMAP_GPA_BINS = [
   { label: "< 3.4", min: 0, max: 3.4 },
   { label: "3.4–3.7", min: 3.4, max: 3.7 },
@@ -175,7 +174,6 @@ const HEATMAP_SAT_BINS = [
 ];
 
 function AcceptanceHeatmap({ profiles, tier, color }) {
-  // rows = SAT (high at top), cols = GPA (low → high)
   const rows = [...HEATMAP_SAT_BINS].reverse();
   const cells = rows.map((sat) =>
     HEATMAP_GPA_BINS.map((gpa) => {
@@ -192,7 +190,6 @@ function AcceptanceHeatmap({ profiles, tier, color }) {
     })
   );
 
-  // scale color to the strongest reliable cell so T5 (low) and T50 (high) both read well
   const maxRate = Math.max(
     0.0001,
     ...cells.flat().filter((c) => c.reliable && c.rate != null).map((c) => c.rate)
@@ -235,7 +232,6 @@ function AcceptanceHeatmap({ profiles, tier, color }) {
   );
 }
 
-// #rrggbb -> rgba() at the given alpha
 function hexWithAlpha(hex, alpha) {
   const h = hex.replace("#", "");
   const r = parseInt(h.slice(0, 2), 16);

@@ -1,24 +1,4 @@
-"""
-main.py — CollegeBase API (FastAPI).
-
-Run locally:
-    pip install fastapi uvicorn scikit-learn
-    uvicorn main:app --reload
-
-Then open http://127.0.0.1:8000/docs to click through every endpoint and see
-real JSON — no frontend needed to verify the backend works.
-
-Endpoints:
-    GET  /health                 -> liveness check
-    GET  /applicants             -> filtered, paged list
-    GET  /applicants/{id}        -> one applicant + its rating summary
-    GET  /stats                  -> summary stats, each rate carries its n
-    POST /ratings                -> submit a 1-10 rating for an applicant
-    GET  /similar/{id}           -> nearest-neighbour profiles (if sklearn present)
-
-Sample-size honesty: any computed acceptance rate reports the n it was based on,
-and is flagged unreliable when n is below MIN_RELIABLE_N.
-"""
+# CollegeBase API — uvicorn main:app --reload, then hit /docs
 
 import os
 import time
@@ -33,12 +13,11 @@ from pydantic import BaseModel, Field
 
 import db
 
-MIN_RELIABLE_N = 15  # below this a rate is too thin to trust
+MIN_RELIABLE_N = 15
 
-# in-memory rate limiter for /ratings
 _rate_buckets = defaultdict(list)
-RATE_LIMIT = 30        # requests per window
-RATE_WINDOW = 60       # seconds
+RATE_LIMIT = 30
+RATE_WINDOW = 60
 
 def _check_rate_limit(client_ip: str):
     now = time.time()
@@ -50,7 +29,6 @@ def _check_rate_limit(client_ip: str):
 
 app = FastAPI(title="CollegeBase API", version="1.0.0")
 
-# lock CORS to known origins; override with CORS_ORIGINS in prod
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
 
 app.add_middleware(
@@ -61,24 +39,21 @@ app.add_middleware(
 )
 
 
-# --- response models --------------------------------------------------------
-
 class RatingIn(BaseModel):
     applicant_id: int
-    rating: int = Field(ge=1, le=10, description="Score from 1 to 10")
+    rating: int = Field(ge=1, le=10)
 
 
+# rate + sample size + Wilson 95% CI
 class Rate(BaseModel):
-    """An acceptance rate that is honest about how many profiles it rests on."""
-    rate: Optional[float]      # None when n == 0
-    n: int                     # sample size the rate is based on
-    reliable: bool             # False when n < MIN_RELIABLE_N
-    ci_low: Optional[float]    # Wilson 95% lower bound (None when n == 0)
-    ci_high: Optional[float]   # Wilson 95% upper bound (None when n == 0)
+    rate: Optional[float]
+    n: int
+    reliable: bool
+    ci_low: Optional[float]
+    ci_high: Optional[float]
 
 
 def wilson_interval(numerator: int, denominator: int, z: float = 1.96):
-    # Wilson 95% CI — stays in [0,1] and holds up at small n, unlike p ± z·√(...)
     if denominator == 0:
         return None, None
     p = numerator / denominator
@@ -101,8 +76,6 @@ def make_rate(numerator: int, denominator: int) -> Rate:
         ci_high=high,
     )
 
-
-# --- basic endpoints --------------------------------------------------------
 
 @app.get("/health")
 def health():
@@ -172,8 +145,6 @@ def post_rating(payload: RatingIn, request: Request):
     }
 
 
-# --- filter options ---------------------------------------------------------
-
 @app.get("/filters/options")
 def filter_options():
     rows = db.get_all_applicants()
@@ -206,15 +177,12 @@ def filter_options():
     }
 
 
-# --- stats (sample-size aware) ----------------------------------------------
-
 @app.get("/stats")
 def stats():
     rows = db.get_all_applicants()
     total = len(rows)
 
     def acc_rate(predicate, tier_key):
-        """Of applicants matching `predicate`, how many were accepted to `tier`?"""
         pool = [r for r in rows if predicate(r)]
         accepted = sum(1 for r in pool if r[tier_key])
         return make_rate(accepted, len(pool))
@@ -229,7 +197,6 @@ def stats():
         ),
     }
 
-    # Acceptance rate into each tier, split by STEM vs non-STEM, each with its n.
     by_tier = {}
     for tier in ("t5_accepted", "t10_accepted", "t20_accepted", "t50_accepted"):
         by_tier[tier] = {
@@ -247,14 +214,10 @@ def _mean(rows, col):
     return round(sum(vals) / len(vals), 2) if vals else None
 
 
-# --- similarity (optional, needs scikit-learn) ------------------------------
-
-# bigger than the shown list (k) so the outcome rate actually means something
 SIMILAR_COHORT = 25
 
 
 def _cohort_outcomes(profiles):
-    # what actually happened to similar applicants — honest stand-in for "chance me"
     n = len(profiles)
     tiers = {}
     for t in ("t5", "t10", "t20", "t50"):
@@ -280,7 +243,6 @@ def similar(applicant_id: int, k: int = Query(5, ge=1, le=20)):
         raise HTTPException(status_code=404, detail="Applicant not found")
 
     rows = db.get_all_applicants()
-    # numeric feature space; profiles missing a value are skipped to keep it simple
     feats = ["gpa_unweighted", "sat_equivalent", "num_ecs", "num_awards"]
     usable = [r for r in rows if all(r.get(f) is not None for f in feats)]
     if target.get("sat_equivalent") is None or target.get("gpa_unweighted") is None:
@@ -294,7 +256,6 @@ def similar(applicant_id: int, k: int = Query(5, ge=1, le=20)):
     Xs = StandardScaler().fit_transform(X)
 
     target_idx = ids.index(applicant_id)
-    # +1 since the target matches itself, then drop it below
     n_neighbors = min(SIMILAR_COHORT + 1, len(usable))
     nn = NearestNeighbors(n_neighbors=n_neighbors).fit(Xs)
     _, idxs = nn.kneighbors([Xs[target_idx]])
@@ -306,8 +267,6 @@ def similar(applicant_id: int, k: int = Query(5, ge=1, le=20)):
         "outcomes": _cohort_outcomes(cohort),
     }
 
-
-# --- shared filter helper ---------------------------------------------------
 
 def _get_filtered_rows(
     gpa_min=None, gpa_max=None, sat_min=None, sat_max=None,
@@ -334,8 +293,6 @@ def _get_filtered_rows(
         ]
     return results
 
-
-# --- school-specific stats --------------------------------------------------
 
 @app.get("/schools")
 def school_stats(
@@ -386,8 +343,6 @@ def school_stats(
         })
     return {"schools": result}
 
-
-# --- demographic breakdowns -------------------------------------------------
 
 def _normalize_race(raw: str) -> Optional[str]:
     low = raw.lower().strip()
@@ -490,8 +445,6 @@ def demographics(
     }
 
 
-# --- batch fetch ------------------------------------------------------------
-
 class BatchIds(BaseModel):
     ids: list[int]
 
@@ -506,9 +459,7 @@ def batch_applicants(payload: BatchIds):
     return {"applicants": results}
 
 
-# --- archetypes (strength-based classification) ----------------------------
-
-# Normalization scale: 10 ECs ≈ 5 awards ≈ 4.0 GPA ≈ 1600 SAT
+# normalize so 10 ECs ≈ 5 awards ≈ 4.0 GPA ≈ 1600 SAT
 def _normalize_profile(r):
     return {
         "gpa": (r.get("gpa_unweighted") or 0) / 4.0,
@@ -558,7 +509,6 @@ def _build_group(label, members):
         "top_awards": sorted(top_awards.items(), key=lambda x: -x[1])[:5],
         "top_majors": sorted(top_majors.items(), key=lambda x: -x[1])[:5],
         "member_ids": [m["applicant_id"] for m in members],
-        # light summaries so the UI can list members without another request
         "members": [
             {
                 "applicant_id": m["applicant_id"],
@@ -592,7 +542,6 @@ def archetypes(
     usable = [r for r in rows if all(r.get(f) is not None for f in feats)]
 
     if view == "grouped":
-        # Group by academic strength (GPA+SAT) and activity strength (ECs+awards)
         def academic_bucket(r):
             n = _normalize_profile(r)
             avg = (n["gpa"] + n["sat"]) / 2
@@ -631,7 +580,6 @@ def archetypes(
             "total_profiles": len(usable),
         }
 
-    # Detailed view: classify each profile by its strongest dimension
     buckets = {}
     for r in usable:
         label = _classify_profile(r)
@@ -692,18 +640,15 @@ def similar_custom(profile: CustomProfile):
     }
 
 
-# --- serve the React frontend (built by Vite) --------------------------------
-
 STATIC_DIR = Path(__file__).resolve().parent / "collegebase-frontend" / "dist"
 
 
+# catch-all: serve built frontend, fall back to index.html for SPA routing
 @app.get("/{full_path:path}")
 def serve_spa(full_path: str):
     if not STATIC_DIR.is_dir():
         return {"error": "Frontend not built. Run: cd collegebase-frontend && npm run build"}
-    # Serve static assets (JS, CSS, images)
     file = STATIC_DIR / full_path
     if file.is_file() and ".." not in full_path:
         return FileResponse(file)
-    # All other routes get index.html (SPA client-side routing)
     return FileResponse(STATIC_DIR / "index.html")

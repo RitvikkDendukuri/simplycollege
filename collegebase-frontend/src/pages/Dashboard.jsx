@@ -62,7 +62,6 @@ export default function Dashboard() {
       .catch((e) => { setError(e.message); setLoading(false); });
   }, [filters]);
 
-  // keep these above the early returns — hooks must run in the same order every render
   const { overall, acceptance_rates } = useMemo(() => computeStats(profiles), [profiles]);
 
   const { stemPoints, nonStemPoints } = useMemo(() => {

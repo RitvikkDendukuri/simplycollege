@@ -87,7 +87,6 @@ export default function Archetypes() {
   );
 }
 
-// floor→ceiling per axis so the radar shows absolute strength, not relative
 const RADAR_SCALES = {
   gpa:    { floor: 2.5, ceiling: 4.0 },
   sat:    { floor: 1000, ceiling: 1600 },

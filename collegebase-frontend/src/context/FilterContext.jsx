@@ -38,7 +38,6 @@ export function FilterProvider({ children }) {
 
   const debouncedFilters = useDebounce(filters, 300);
 
-  // Active filter chips for display
   const activeChips = Object.entries(filters).flatMap(([k, v]) => {
     if (!v || v === "") return [];
     const labelFns = {

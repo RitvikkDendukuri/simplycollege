@@ -1,6 +1,5 @@
 import "./CorrelationMatrix.css";
 
-// same five numeric features as the old Streamlit version
 const FEATURES = [
   { key: "gpa_unweighted", label: "GPA" },
   { key: "sat_equivalent", label: "SAT-Eq" },
@@ -9,7 +8,6 @@ const FEATURES = [
   { key: "num_awards", label: "Awards" },
 ];
 
-// pearson r over rows where both values exist (like pandas .corr())
 function pearson(profiles, keyA, keyB) {
   const pairs = [];
   for (const p of profiles) {
@@ -33,7 +31,6 @@ function pearson(profiles, keyA, keyB) {
   return cov / Math.sqrt(varA * varB);
 }
 
-// red→yellow→green: yellow at 0, green toward +1, red toward -1
 function corrColor(r) {
   if (r == null) return "var(--surface2)";
   const yellow = [255, 255, 191];

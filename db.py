@@ -1,13 +1,4 @@
-"""
-db.py — Data access layer for the CollegeBase API.
-
-ALL SQL lives in this file. The API routes in main.py call these functions and
-never touch the database directly. This isolation means that if you later move
-from SQLite to Postgres, this is the only file you rewrite.
-
-Rows come back as plain dicts with JSON list-fields already decoded into real
-Python lists, so the API layer can hand them straight to the response model.
-"""
+# db.py — all SQL lives here, rest of the app talks through these functions
 
 import json
 import sqlite3
@@ -15,12 +6,10 @@ from pathlib import Path
 
 DB_PATH = "collegebase.db"
 
-# Columns stored as JSON text that must be decoded back into lists on read.
 _LIST_COLS = [
     "majors", "race", "awards", "extracurriculars",
     "acceptances", "rejections", "ec_categories", "award_categories",
 ]
-# Columns stored as 0/1 that should surface as real booleans.
 _BOOL_COLS = [
     "test_optional", "stem_major",
     "t5_accepted", "t10_accepted", "t20_accepted", "t50_accepted",
@@ -39,7 +28,6 @@ def _connect():
 
 
 def _row_to_dict(row):
-    """Decode a sqlite Row into a clean dict (lists parsed, bools real)."""
     d = dict(row)
     for col in _LIST_COLS:
         if col in d and isinstance(d[col], str):
@@ -50,20 +38,7 @@ def _row_to_dict(row):
     return d
 
 
-# --- applicants -------------------------------------------------------------
-
 def list_applicants(filters):
-    """Return applicants matching the given filters (a dict of optional keys).
-
-    Supported filters (all optional):
-        gpa_min, gpa_max          (float, on gpa_unweighted)
-        sat_min, sat_max          (float, on sat_equivalent)
-        stem_only                 (bool)
-        test_optional_only        (bool)
-        accepted_tier             ('t5'|'t10'|'t20'|'t50')
-        major                     (str, matches if present in majors list)
-        limit, offset             (int, for paging)
-    """
     where, params = [], []
 
     if filters.get("gpa_min") is not None:
@@ -90,8 +65,6 @@ def list_applicants(filters):
         where.append("gender = ?")
         params.append(filters["gender"])
 
-    # JSON list columns matched by substring. Escape LIKE wildcards so user
-    # input can't smuggle in % or _ patterns.
     def _escape_like(s):
         return s.replace("%", "\\%").replace("_", "\\_")
 
@@ -124,7 +97,6 @@ def list_applicants(filters):
 
 
 def get_applicant(applicant_id):
-    """Return one applicant by stable id, or None."""
     conn = _connect()
     try:
         row = conn.execute(
@@ -136,7 +108,6 @@ def get_applicant(applicant_id):
 
 
 def get_all_applicants():
-    """Every applicant, used by stats and similarity. Returns list of dicts."""
     conn = _connect()
     try:
         rows = conn.execute("SELECT * FROM applicants ORDER BY applicant_id").fetchall()
@@ -145,13 +116,7 @@ def get_all_applicants():
         conn.close()
 
 
-# --- ratings ----------------------------------------------------------------
-
 def add_rating(applicant_id, rating):
-    """Insert a rating (1-10) for an applicant. Returns the new rating row id.
-
-    Raises ValueError if the applicant does not exist (so the API can return 404).
-    """
     conn = _connect()
     try:
         exists = conn.execute(
@@ -170,7 +135,6 @@ def add_rating(applicant_id, rating):
 
 
 def get_rating_summary(applicant_id):
-    """Return {'count': n, 'average': x|None} for an applicant's ratings."""
     conn = _connect()
     try:
         row = conn.execute(

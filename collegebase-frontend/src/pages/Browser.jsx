@@ -52,7 +52,6 @@ export default function Browser() {
     load();
   }, [load]);
 
-  // Client-side search on visible page
   const visible = profiles.filter((p) => {
     if (!search) return true;
     const q = search.toLowerCase();
@@ -64,7 +63,6 @@ export default function Browser() {
     );
   });
 
-  // Client-side sort on visible page
   const sorted = [...visible].sort((a, b) => {
     let av = a[sortKey], bv = b[sortKey];
     if (Array.isArray(av)) av = av.join();

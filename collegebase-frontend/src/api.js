@@ -16,7 +16,6 @@ async function post(path, body) {
   return res.json();
 }
 
-// Build query string from a filters object, omitting nulls/undefined/false/"".
 function qs(filters) {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(filters)) {

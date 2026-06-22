@@ -1,6 +1,5 @@
 import "./SampleBadge.css";
 
-// shows a rate with its sample size + CI so the number never stands alone
 export default function SampleBadge({ rate, label }) {
   if (!rate) return null;
   const pct = rate.rate !== null ? (rate.rate * 100).toFixed(1) + "%" : "—";
