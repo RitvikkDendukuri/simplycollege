@@ -3,4 +3,6 @@ __pycache__/
 desktop.ini
 node_modules/
 .env
+*.env.local
+collegebase-frontend/.env
 collegebase-frontend/dist/
