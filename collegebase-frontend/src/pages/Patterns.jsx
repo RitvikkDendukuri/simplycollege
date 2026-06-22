@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -7,9 +7,10 @@ import {
 import { api } from "../api";
 import { useFilters } from "../context/FilterContext";
 import { usePageTitle } from "../utils";
+import { MIN_RELIABLE_N, TIER_COLORS, wilsonInterval } from "../constants";
 import "./Patterns.css";
 
-const MIN_N = 15;
+const MIN_N = MIN_RELIABLE_N;
 
 function bucket(profiles, key, bins) {
   return bins.map((b) => {
@@ -126,15 +127,13 @@ const SAT_BINS = [
   { label: "1550-1600", min: 1550, max: 1601 },
 ];
 
-const TIER_COLORS = { t5: "#ef4444", t10: "#f97316", t20: "#6366f1", t50: "#22c55e" };
-
 function RateBar({ data, tier }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} margin={{ bottom: 20 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="label" angle={-25} textAnchor="end" interval={0} tick={{ fontSize: 11 }} />
-        <YAxis unit="%" domain={[0, 100]} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+        <XAxis dataKey="label" angle={-25} textAnchor="end" interval={0} tick={{ fontSize: 11, fill: "var(--text-sub)" }} />
+        <YAxis unit="%" domain={[0, 100]} tick={{ fill: "var(--text-sub)" }} />
         <Tooltip
           content={({ payload, label }) => {
             if (!payload?.length) return null;
@@ -161,12 +160,97 @@ function RateBar({ data, tier }) {
   );
 }
 
+// coarser bins so each grid cell has a shot at a usable sample size
+const HEATMAP_GPA_BINS = [
+  { label: "< 3.4", min: 0, max: 3.4 },
+  { label: "3.4–3.7", min: 3.4, max: 3.7 },
+  { label: "3.7–3.9", min: 3.7, max: 3.9 },
+  { label: "3.9–4.0", min: 3.9, max: 4.01 },
+];
+const HEATMAP_SAT_BINS = [
+  { label: "< 1300", min: 0, max: 1300 },
+  { label: "1300–1450", min: 1300, max: 1450 },
+  { label: "1450–1550", min: 1450, max: 1550 },
+  { label: "1550+", min: 1550, max: 1601 },
+];
+
+function AcceptanceHeatmap({ profiles, tier, color }) {
+  // rows = SAT (high at top), cols = GPA (low → high)
+  const rows = [...HEATMAP_SAT_BINS].reverse();
+  const cells = rows.map((sat) =>
+    HEATMAP_GPA_BINS.map((gpa) => {
+      const pool = profiles.filter((p) =>
+        p.gpa_unweighted != null && p.sat_equivalent != null &&
+        p.gpa_unweighted >= gpa.min && p.gpa_unweighted < gpa.max &&
+        p.sat_equivalent >= sat.min && p.sat_equivalent < sat.max
+      );
+      const acc = pool.filter((p) => p[`${tier}_accepted`]).length;
+      const n = pool.length;
+      const rate = n ? acc / n : null;
+      const [ciLow, ciHigh] = wilsonInterval(acc, n);
+      return { n, rate, ciLow, ciHigh, reliable: n >= MIN_N };
+    })
+  );
+
+  // scale color to the strongest reliable cell so T5 (low) and T50 (high) both read well
+  const maxRate = Math.max(
+    0.0001,
+    ...cells.flat().filter((c) => c.reliable && c.rate != null).map((c) => c.rate)
+  );
+
+  return (
+    <div className="heatmap">
+      <div className="heatmap-grid"
+        style={{ gridTemplateColumns: `auto repeat(${HEATMAP_GPA_BINS.length}, 1fr)` }}>
+        <div className="heatmap-corner">SAT \ GPA</div>
+        {HEATMAP_GPA_BINS.map((g) => (
+          <div key={g.label} className="heatmap-colhead">{g.label}</div>
+        ))}
+        {rows.map((sat, ri) => (
+          <Fragment key={sat.label}>
+            <div className="heatmap-rowhead">{sat.label}</div>
+            {cells[ri].map((c, ci) => {
+              const alpha = c.rate != null && c.reliable ? 0.12 + 0.88 * (c.rate / maxRate) : 0;
+              return (
+                <div key={ci}
+                  className={`heatmap-cell ${c.n === 0 ? "empty" : ""} ${c.n > 0 && !c.reliable ? "thin" : ""}`}
+                  style={c.reliable ? { background: hexWithAlpha(color, alpha) } : undefined}
+                  title={c.n === 0 ? "No profiles in this band"
+                    : `n = ${c.n}${c.reliable
+                        ? ` · 95% CI ${(c.ciLow * 100).toFixed(0)}–${(c.ciHigh * 100).toFixed(0)}%`
+                        : " · too few to trust"}`}>
+                  {c.n === 0 ? "—" : (
+                    <>
+                      <span className="heatmap-rate">{(c.rate * 100).toFixed(0)}%</span>
+                      <span className="heatmap-n">n={c.n}{!c.reliable && " ⚠"}</span>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// #rrggbb -> rgba() at the given alpha
+function hexWithAlpha(hex, alpha) {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
+}
+
 export default function Patterns() {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tier, setTier] = useState("t20");
+  const [section, setSection] = useState("academics");
   const navigate = useNavigate();
-  const { filters, update, reset, hideUnreliable } = useFilters();
+  const { debouncedFilters: filters, update, reset, hideUnreliable } = useFilters();
 
   usePageTitle("Acceptance Patterns");
 
@@ -227,6 +311,21 @@ export default function Patterns() {
         ))}
       </div>
 
+      <div className="section-tabs">
+        {[
+          { id: "academics", label: "Academics" },
+          { id: "activities", label: "Activities & Awards" },
+          { id: "adjusted", label: "Adjusted Impact" },
+        ].map((s) => (
+          <button key={s.id}
+            className={`section-tab ${section === s.id ? "active" : ""}`}
+            onClick={() => setSection(s.id)}>
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {section === "academics" && <>
       <div className="pattern-grid">
         <section className="chart-section">
           <h2>By GPA range {"→"} {tier.toUpperCase()} acceptance</h2>
@@ -239,6 +338,19 @@ export default function Patterns() {
         </section>
       </div>
 
+      <section className="chart-section">
+        <h2>GPA × SAT interaction {"→"} {tier.toUpperCase()} acceptance</h2>
+        <p className="section-sub">
+          Acceptance rate at each GPA/SAT combination — reveals how the two
+          interact rather than viewing each alone. Darker = higher rate
+          (scaled to the strongest reliable cell). Cells with n &lt; {MIN_N} are
+          hatched; hover any cell for its 95% confidence interval.
+        </p>
+        <AcceptanceHeatmap profiles={profiles} tier={tier} color={TIER_COLORS[tier]} />
+      </section>
+      </>}
+
+      {section === "activities" && <>
       <section className="chart-section">
         <h2>By EC category {"→"} {tier.toUpperCase()} acceptance rate</h2>
         <p className="section-sub">Click a row to browse matching profiles.</p>
@@ -333,7 +445,9 @@ export default function Patterns() {
           </div>
         </section>
       </div>
+      </>}
 
+      {section === "adjusted" && <>
       <div className="pattern-grid">
         <section className="chart-section">
           <h2>EC impact (adjusted for GPA + SAT) {"→"} {tier.toUpperCase()}</h2>
@@ -402,6 +516,7 @@ export default function Patterns() {
           </div>
         </section>
       </div>
+      </>}
     </div>
   );
 }

@@ -28,6 +28,34 @@
   box-shadow: var(--shadow-sm);
 }
 
+.section-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-tab {
+  padding: 10px 18px;
+  border: none;
+  background: none;
+  color: var(--text-sub);
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.section-tab:hover {
+  color: var(--text);
+}
+
+.section-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
 .pattern-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -48,6 +76,14 @@
   .tier-tab {
     padding: 6px 14px;
     font-size: 12px;
+  }
+  .section-tabs {
+    overflow-x: auto;
+  }
+  .section-tab {
+    padding: 8px 12px;
+    font-size: 12px;
+    white-space: nowrap;
   }
   .category-table th,
   .category-table td {
@@ -120,3 +156,99 @@
 
 .positive-diff { color: var(--success); font-weight: 600; }
 .negative-diff { color: var(--danger); font-weight: 600; }
+
+/* ===== GPA × SAT heatmap ===== */
+.heatmap {
+  overflow-x: auto;
+}
+
+.heatmap-grid {
+  display: grid;
+  gap: 4px;
+  min-width: 440px;
+}
+
+.heatmap-corner {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: flex-end;
+  padding: 4px;
+}
+
+.heatmap-colhead,
+.heatmap-rowhead {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.heatmap-rowhead {
+  justify-content: flex-end;
+  padding-right: 8px;
+  white-space: nowrap;
+}
+
+.heatmap-cell {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: var(--surface2);
+  transition: transform var(--transition), box-shadow var(--transition);
+  cursor: help;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.04);
+  box-shadow: var(--shadow-md);
+  z-index: 2;
+}
+
+.heatmap-cell.empty {
+  color: var(--text-muted);
+  background: transparent;
+  border-style: dashed;
+  cursor: default;
+}
+
+.heatmap-cell.empty:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.heatmap-cell.thin {
+  background-image: repeating-linear-gradient(
+    45deg, transparent, transparent 5px,
+    var(--border) 5px, var(--border) 6px
+  );
+  opacity: 0.7;
+}
+
+.heatmap-rate {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.heatmap-n {
+  font-size: 10px;
+  color: var(--text-sub);
+}
+
+@media (max-width: 768px) {
+  .heatmap-cell { min-height: 48px; }
+  .heatmap-rate { font-size: 14px; }
+}
