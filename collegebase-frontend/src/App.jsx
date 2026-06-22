@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from "react-router-dom";
 import { FilterProvider } from "./context/FilterContext";
 import { SavedProvider } from "./context/SavedContext";
@@ -10,22 +10,96 @@ import Schools from "./pages/Schools";
 import Demographics from "./pages/Demographics";
 import Similar from "./pages/Similar";
 import Saved from "./pages/Saved";
+import Archetypes from "./pages/Archetypes";
+import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
 
-function ThemeToggle() {
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+const THEMES = [
+  { id: "dark",     label: "Dark",     icon: "🌑", group: "dark" },
+  { id: "midnight", label: "Midnight", icon: "🌊", group: "dark" },
+  { id: "forest",   label: "Forest",   icon: "🌲", group: "dark" },
+  { id: "rose",     label: "Rose",     icon: "🌸", group: "dark" },
+  { id: "sunset",   label: "Sunset",   icon: "🌅", group: "dark" },
+  { id: "light",    label: "Light",    icon: "☀️", group: "light" },
+  { id: "nord",     label: "Nord",     icon: "❄️", group: "light" },
+  { id: "lavender", label: "Lavender", icon: "💜", group: "light" },
+];
+
+function getSystemTheme() {
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+function resolveTheme(stored) {
+  if (stored === "auto") return getSystemTheme();
+  return stored || "dark";
+}
+
+function ThemePicker() {
+  const [stored, setStored] = useState(() => localStorage.getItem("theme") || "auto");
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const active = resolveTheme(stored);
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+    document.documentElement.setAttribute("data-theme", active);
+    localStorage.setItem("theme", stored);
+  }, [stored, active]);
+
+  useEffect(() => {
+    if (stored !== "auto") return;
+    const mq = window.matchMedia("(prefers-color-scheme: light)");
+    const handler = () => document.documentElement.setAttribute("data-theme", getSystemTheme());
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [stored]);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open, ref]);
+
+  const current = THEMES.find((t) => t.id === active) || THEMES[0];
 
   return (
-    <button className="theme-toggle"
-      onClick={() => setTheme((t) => t === "dark" ? "light" : "dark")}
-      title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}>
-      {theme === "dark" ? "☀" : "☾"}
-    </button>
+    <div className="theme-picker" ref={ref}>
+      <button className="theme-toggle" onClick={() => setOpen(!open)}
+        title="Change theme">
+        {stored === "auto" ? "🔄" : current.icon}
+      </button>
+      {open && (
+        <div className="theme-dropdown">
+          <button
+            className={`theme-option ${stored === "auto" ? "active" : ""}`}
+            onClick={() => { setStored("auto"); setOpen(false); }}>
+            <span className="theme-option-icon">🔄</span>
+            <span>Auto</span>
+            <span className="theme-option-hint">System</span>
+          </button>
+          <div className="theme-group-label">Dark</div>
+          {THEMES.filter((t) => t.group === "dark").map((t) => (
+            <button key={t.id}
+              className={`theme-option ${active === t.id && stored !== "auto" ? "active" : ""}`}
+              onClick={() => { setStored(t.id); setOpen(false); }}>
+              <span className="theme-option-icon">{t.icon}</span>
+              <span>{t.label}</span>
+            </button>
+          ))}
+          <div className="theme-group-label">Light</div>
+          {THEMES.filter((t) => t.group === "light").map((t) => (
+            <button key={t.id}
+              className={`theme-option ${active === t.id && stored !== "auto" ? "active" : ""}`}
+              onClick={() => { setStored(t.id); setOpen(false); }}>
+              <span className="theme-option-icon">{t.icon}</span>
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -54,7 +128,7 @@ function MobileNav({ menuOpen, setMenuOpen, filterOpen, setFilterOpen }) {
               <circle cx="6" cy="12" r="2" fill="currentColor" /><circle cx="10" cy="18" r="2" fill="currentColor" /><circle cx="8" cy="6" r="2" fill="currentColor" />
             </svg>
           </button>
-          <ThemeToggle />
+          <ThemePicker />
         </div>
       </nav>
 
@@ -65,6 +139,7 @@ function MobileNav({ menuOpen, setMenuOpen, filterOpen, setFilterOpen }) {
         <NavLink to="/patterns">Patterns</NavLink>
         <NavLink to="/schools">Schools</NavLink>
         <NavLink to="/demographics">Demographics</NavLink>
+        <NavLink to="/archetypes">Archetypes</NavLink>
         <NavLink to="/similar">Find Similar</NavLink>
         <NavLink to="/saved">Saved</NavLink>
       </div>
@@ -90,10 +165,42 @@ function DesktopNav() {
       <NavLink to="/patterns">Patterns</NavLink>
       <NavLink to="/schools">Schools</NavLink>
       <NavLink to="/demographics">Demographics</NavLink>
+      <NavLink to="/archetypes">Archetypes</NavLink>
       <NavLink to="/similar">Find Similar</NavLink>
       <NavLink to="/saved">Saved</NavLink>
-      <ThemeToggle />
+      <ThemePicker />
     </nav>
+  );
+}
+
+function MainContent() {
+  const location = useLocation();
+  return (
+    <main className="main-content">
+      {/* key by route so a crashed page resets when you navigate away */}
+      <ErrorBoundary key={location.pathname}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/browser" element={<Browser />} />
+          <Route path="/patterns" element={<Patterns />} />
+          <Route path="/schools" element={<Schools />} />
+          <Route path="/demographics" element={<Demographics />} />
+          <Route path="/archetypes" element={<Archetypes />} />
+          <Route path="/similar" element={<Similar />} />
+          <Route path="/saved" element={<Saved />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </ErrorBoundary>
+    </main>
+  );
+}
+
+function NotFound() {
+  return (
+    <div className="page">
+      <h1>Page not found</h1>
+      <p className="page-sub">The page you're looking for doesn't exist. Try one of the links in the navigation.</p>
+    </div>
   );
 }
 
@@ -123,17 +230,7 @@ export default function App() {
               </>
             )}
 
-            <main className="main-content">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/browser" element={<Browser />} />
-                <Route path="/patterns" element={<Patterns />} />
-                <Route path="/schools" element={<Schools />} />
-                <Route path="/demographics" element={<Demographics />} />
-                <Route path="/similar" element={<Similar />} />
-                <Route path="/saved" element={<Saved />} />
-              </Routes>
-            </main>
+            <MainContent />
           </div>
         </SavedProvider>
       </FilterProvider>
