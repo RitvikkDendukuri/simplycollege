@@ -1,4 +1,4 @@
-# CollegeBase
+# SimplyCollege
 
 Explore real college applicant profiles, acceptance patterns, and school statistics. Built as an honest alternative to "chance me" posts — every number shows its sample size, and unreliable rates are flagged with a confidence interval.
 
