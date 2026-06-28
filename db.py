@@ -1,4 +1,4 @@
-# db.py — all SQL lives here, rest of the app talks through these functions
+# All SQL lives here; the rest of the app goes through these functions.
 
 import json
 import sqlite3
@@ -22,7 +22,7 @@ def _connect():
             f"{DB_PATH} not found. Run `python migrate.py` first to build it."
         )
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row          # rows behave like dicts
+    conn.row_factory = sqlite3.Row  # rows act like dicts
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 

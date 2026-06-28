@@ -1,18 +1,10 @@
 """
-migrate.py — Build the CollegeBase SQLite database from profiles.jsonl.
+Build the CollegeBase SQLite database from profiles.jsonl.
 
-What it does:
-  1. Runs the data pipeline in logic.py over profiles.jsonl (187 profiles).
-  2. Creates collegebase.db using schema.sql.
-  3. Inserts every processed profile into the `applicants` table.
-  4. Carries over any existing ratings from an old profile_ratings.db, if present,
-     de-duplicating exact repeats.
+Runs the logic.py pipeline, recreates collegebase.db from schema.sql, and
+inserts every processed profile. Safe to re-run — it rebuilds from scratch.
 
-Run it with:   python migrate.py
-Re-running is safe: it rebuilds the tables from scratch each time.
-
-This replaces the old migrate_smart.py. It imports the keyword maps and tier
-logic from logic.py instead of keeping its own (drifted) copies.
+    python migrate.py
 """
 
 import json
@@ -23,20 +15,17 @@ import pandas as pd
 
 import logic
 
-# --- config -----------------------------------------------------------------
 _DIR = Path(__file__).resolve().parent
 PROFILES_JSONL = _DIR / "profiles.jsonl"
 SCHEMA_SQL = _DIR / "schema.sql"
 DB_PATH = _DIR / "collegebase.db"
-OLD_RATINGS_DB = _DIR / "profile_ratings.db"  # optional; carried over if it exists
+OLD_RATINGS_DB = _DIR / "profile_ratings.db"
 
-# Columns that hold Python lists and must be JSON-encoded for storage.
+# List columns are JSON-encoded; bool columns are stored as 0/1.
 LIST_COLS = [
     "majors", "race", "awards", "extracurriculars",
     "acceptances", "rejections", "ec_categories", "award_categories",
 ]
-
-# Boolean columns stored as 0/1 integers.
 BOOL_COLS = [
     "test_optional", "stem_major",
     "t5_accepted", "t10_accepted", "t20_accepted", "t50_accepted",
@@ -57,12 +46,11 @@ APPLICANT_COLS = [
 
 
 def _clean_scalar(v):
-    """Convert pandas NaN to None and numpy scalars to plain Python types."""
+    """NaN -> None, and numpy scalars -> plain Python types."""
     if v is None:
         return None
     if isinstance(v, float) and pd.isna(v):
         return None
-    # numpy bool/int/float -> python
     if hasattr(v, "item"):
         return v.item()
     return v
@@ -86,14 +74,12 @@ def row_to_tuple(row):
 def build_database():
     print(f"Processing {PROFILES_JSONL} through logic.py ...")
     df = logic.process_file(PROFILES_JSONL)
-    # logic.py sets profile_id as both index and column; drop the index copy.
     df = df.reset_index(drop=True)
-    # Sort by content hash so applicant_id 1..N is deterministic across rebuilds.
+    # Sort by content hash so applicant_id 1..N is stable across rebuilds.
     df = df.drop_duplicates(subset="profile_id", keep="first")
     df = df.sort_values("profile_id").reset_index(drop=True)
     print(f"  -> {len(df)} profiles processed (after dedup).")
 
-    # Fresh database from schema.
     if Path(DB_PATH).exists():
         Path(DB_PATH).unlink()
     conn = sqlite3.connect(DB_PATH)
@@ -101,7 +87,6 @@ def build_database():
     print(f"Creating tables from {SCHEMA_SQL} ...")
     conn.executescript(Path(SCHEMA_SQL).read_text())
 
-    # Insert applicants.
     placeholders = ", ".join(["?"] * len(APPLICANT_COLS))
     sql = f"INSERT INTO applicants ({', '.join(APPLICANT_COLS)}) VALUES ({placeholders})"
     rows = [row_to_tuple(r) for _, r in df.iterrows()]
@@ -116,10 +101,8 @@ def build_database():
 
 
 def note_old_ratings():
-    """The old profile_ratings.db keyed ratings by content hash, which changes
-    when source data is reprocessed. We proved those hashes no longer match any
-    current profile, so there is nothing reliable to carry over. Report and move on.
-    """
+    """Old ratings keyed off stale content hashes that no longer match any
+    profile, so there's nothing to carry over — just report and move on."""
     if not Path(OLD_RATINGS_DB).exists():
         return
     old = sqlite3.connect(OLD_RATINGS_DB)
