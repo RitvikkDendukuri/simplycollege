@@ -129,6 +129,7 @@ const SAT_BINS = [
 
 function RateBar({ data, tier }) {
   return (
+    <div className="ratebar-wrap">
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} margin={{ bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -157,6 +158,7 @@ function RateBar({ data, tier }) {
         </Bar>
       </BarChart>
     </ResponsiveContainer>
+    </div>
   );
 }
 
@@ -325,17 +327,20 @@ export default function Patterns() {
       {section === "academics" && <>
       <div className="pattern-grid">
         <section className="chart-section">
+          <span className="section-num">01</span>
           <h2>By GPA range {"→"} {tier.toUpperCase()} acceptance</h2>
           <RateBar data={gpaBuckets} tier={tier} />
         </section>
 
         <section className="chart-section">
+          <span className="section-num">02</span>
           <h2>By SAT equivalent range {"→"} {tier.toUpperCase()} acceptance</h2>
           <RateBar data={satBuckets} tier={tier} />
         </section>
       </div>
 
       <section className="chart-section">
+        <span className="section-num">03</span>
         <h2>GPA × SAT interaction {"→"} {tier.toUpperCase()} acceptance</h2>
         <p className="section-sub">
           Acceptance rate at each GPA/SAT combination — reveals how the two
@@ -349,6 +354,7 @@ export default function Patterns() {
 
       {section === "activities" && <>
       <section className="chart-section">
+        <span className="section-num">01</span>
         <h2>By EC category {"→"} {tier.toUpperCase()} acceptance rate</h2>
         <p className="section-sub">Click a row to browse matching profiles.</p>
         <div className="category-table">
@@ -378,6 +384,7 @@ export default function Patterns() {
       </section>
 
       <section className="chart-section">
+        <span className="section-num">02</span>
         <h2>By award category {"→"} {tier.toUpperCase()} acceptance rate</h2>
         <p className="section-sub">Click a row to browse matching profiles.</p>
         <div className="category-table">
@@ -408,6 +415,7 @@ export default function Patterns() {
 
       <div className="pattern-grid">
         <section className="chart-section">
+          <span className="section-num">03</span>
           <h2>EC count {"→"} {tier.toUpperCase()} acceptance</h2>
           <p className="section-sub">Does more always mean better? Click a bucket to filter.</p>
           <RateBar data={ecCountImpact} tier={tier} />
@@ -426,6 +434,7 @@ export default function Patterns() {
         </section>
 
         <section className="chart-section">
+          <span className="section-num">04</span>
           <h2>Award count {"→"} {tier.toUpperCase()} acceptance</h2>
           <p className="section-sub">How does the number of awards affect outcomes?</p>
           <RateBar data={awardCountImpact} tier={tier} />
@@ -447,6 +456,7 @@ export default function Patterns() {
       {section === "adjusted" && <>
       <div className="pattern-grid">
         <section className="chart-section">
+          <span className="section-num">01</span>
           <h2>EC impact (adjusted for GPA + SAT) {"→"} {tier.toUpperCase()}</h2>
           <p className="section-sub">
             Uses all {ecAdjusted.n} profiles. Boost shows how much more/less likely
@@ -481,6 +491,7 @@ export default function Patterns() {
         </section>
 
         <section className="chart-section">
+          <span className="section-num">02</span>
           <h2>Award impact (adjusted for GPA + SAT) {"→"} {tier.toUpperCase()}</h2>
           <p className="section-sub">
             Uses all {awardAdjusted.n} profiles. Positive boost = award adds value beyond raw stats. Click to browse.

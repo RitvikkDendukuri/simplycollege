@@ -113,6 +113,7 @@ function DetailedView({ data, expanded, setExpanded, setSelectedId }) {
   return (
     <>
       <section className="chart-section">
+        <span className="section-num">01</span>
         <h2>T20 acceptance rate by archetype</h2>
         <p className="section-sub">Which profile shape gets into T20 schools most often?</p>
         <ResponsiveContainer width="100%" height={260}>
@@ -162,6 +163,7 @@ function GroupedView({ data, expanded, setExpanded, setSelectedId }) {
   return (
     <>
       <section className="chart-section">
+        <span className="section-num">01</span>
         <h2>By academic strength (GPA + SAT combined)</h2>
         <p className="section-sub">Profiles grouped by their combined GPA and SAT score.</p>
         <GroupChart groups={academics} />
@@ -178,6 +180,7 @@ function GroupedView({ data, expanded, setExpanded, setSelectedId }) {
       </div>
 
       <section className="chart-section" style={{ marginTop: 28 }}>
+        <span className="section-num">02</span>
         <h2>By activity level (ECs + awards combined)</h2>
         <p className="section-sub">Profiles grouped by their combined extracurricular and award count.</p>
         <GroupChart groups={activity} />

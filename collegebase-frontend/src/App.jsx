@@ -175,7 +175,7 @@ function DesktopNav({ filterOpen, setFilterOpen }) {
 function MainContent() {
   const location = useLocation();
   return (
-    <main className="main-content">
+    <main className="main-content" id="main-content">
       {/* key by route so a crashed page resets when you navigate away */}
       <ErrorBoundary key={location.pathname}>
         <Routes>
@@ -216,6 +216,7 @@ export default function App() {
     <BrowserRouter>
       <FilterProvider>
         <SavedProvider>
+          <a href="#main-content" className="skip-link">Skip to content</a>
           <div className={`app-shell ${isMobile ? "mobile" : ""}`}>
             {isMobile ? (
               <MobileNav menuOpen={menuOpen} setMenuOpen={setMenuOpen}

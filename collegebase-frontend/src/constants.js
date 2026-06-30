@@ -1,5 +1,13 @@
 export const MIN_RELIABLE_N = 15;
 
+// Reads a CSS custom property off :root so chart fills (set as SVG attributes,
+// where var() doesn't resolve) can still follow the active theme.
+export function cssVar(name, fallback) {
+  if (typeof window === "undefined") return fallback;
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+
 export const TIER_COLORS = {
   t5: "#e4e4ef",
   t10: "#a0a0b8",

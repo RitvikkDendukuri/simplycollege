@@ -1,4 +1,15 @@
 /* Dashboard.css */
+
+/* Scatter points turn brand-teal on hover (matches nav/section accent).
+   Recharts renders each point as a <path class="recharts-symbols">. */
+.recharts-scatter-symbol .recharts-symbols {
+  transition: fill 0.15s ease, opacity 0.15s ease;
+}
+.recharts-scatter-symbol:hover .recharts-symbols {
+  fill: var(--brand) !important;
+  opacity: 1 !important;
+}
+
 .metric-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -23,6 +34,8 @@
   font-weight: 400;
   color: var(--text);
   letter-spacing: -0.02em;
+  /* tabular figures stop the count-up animation from reflowing width */
+  font-variant-numeric: tabular-nums;
 }
 
 .metric-label {
@@ -53,9 +66,10 @@
 }
 
 .badge-tier {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-sub);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 4px;
@@ -68,12 +82,25 @@
   gap: 32px;
 }
 
-.demo-summary-col h3 {
+.demo-col-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.demo-col-header h3 {
   font-family: var(--font-heading);
   font-size: 16px;
   font-weight: 400;
-  margin-bottom: 12px;
   color: var(--text);
+  margin: 0;
+}
+
+.demo-view-select {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
 }
 
 .demo-row {
@@ -88,8 +115,20 @@
 .demo-row.dimmed { opacity: 0.45; }
 
 .demo-label { flex: 1; }
-.demo-n { color: var(--text-muted); font-size: 11px; min-width: 50px; }
-.demo-rate { font-weight: 600; min-width: 50px; text-align: right; }
+.demo-n {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  min-width: 50px;
+  font-variant-numeric: tabular-nums;
+}
+.demo-rate {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  min-width: 50px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 
 @media (max-width: 768px) {
   .metric-row {

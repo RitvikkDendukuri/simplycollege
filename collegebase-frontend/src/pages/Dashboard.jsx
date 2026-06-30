@@ -41,62 +41,26 @@ function computeStats(profiles) {
   return { overall, acceptance_rates };
 }
 
-function computeDemographics(profiles) {
-  const grouped = {};
-  profiles.forEach((p) => {
-    const key = p.race_group || p.race || "Unknown";
-    if (!grouped[key]) grouped[key] = { total: 0, accepted: {} };
-    grouped[key].total += 1;
-    for (const t of TIER_KEYS) {
-      if (p[t]) grouped[key].accepted[t] = (grouped[key].accepted[t] || 0) + 1;
-    }
-  });
-  return Object.entries(grouped)
-    .map(([label, { total, accepted }]) => ({
-      label,
-      n: total,
-      t20_rate: total >= MIN_RELIABLE_N && accepted.t20_accepted
-        ? +((accepted.t20_accepted / total) * 100).toFixed(1)
-        : null,
-      reliable: total >= MIN_RELIABLE_N,
-    }))
-    .filter((d) => d.n >= 3)
-    .sort((a, b) => b.n - a.n);
-}
-
-function computeGenderSplit(profiles) {
-  const grouped = {};
-  profiles.forEach((p) => {
-    const key = p.gender || "Unknown";
-    if (!grouped[key]) grouped[key] = { total: 0, t20: 0 };
-    grouped[key].total += 1;
-    if (p.t20_accepted) grouped[key].t20 += 1;
-  });
-  return Object.entries(grouped)
-    .map(([label, { total, t20 }]) => ({
-      label,
-      n: total,
-      t20_rate: total >= MIN_RELIABLE_N ? +((t20 / total) * 100).toFixed(1) : null,
-      reliable: total >= MIN_RELIABLE_N,
-    }))
-    .filter((d) => d.n >= 3)
-    .sort((a, b) => b.n - a.n);
-}
-
 export default function Dashboard() {
   const { debouncedFilters: filters, hideUnreliable } = useFilters();
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
+  const [demoData, setDemoData] = useState(null);
+  const [raceView, setRaceView] = useState("grouped");
 
   usePageTitle("Dashboard");
 
   useEffect(() => {
     setLoading(true);
-    api.applicants({ ...filters, limit: 1000 })
-      .then((p) => {
+    Promise.all([
+      api.applicants({ ...filters, limit: 1000 }),
+      api.demographics(filters),
+    ])
+      .then(([p, d]) => {
         setProfiles(p.applicants);
+        setDemoData(d);
         setLoading(false);
       })
       .catch((e) => { setError(e.message); setLoading(false); });
@@ -120,8 +84,16 @@ export default function Dashboard() {
     };
   }, [profiles]);
 
-  const demoData = useMemo(() => computeDemographics(profiles), [profiles]);
-  const genderData = useMemo(() => computeGenderSplit(profiles), [profiles]);
+  const raceData = useMemo(() => {
+    if (!demoData) return [];
+    const src = raceView === "grouped" ? demoData.by_race_grouped : demoData.by_race;
+    return (src || []).filter((d) => d.n >= 3).sort((a, b) => b.n - a.n);
+  }, [demoData, raceView]);
+
+  const genderData = useMemo(() => {
+    if (!demoData) return [];
+    return (demoData.by_gender || []).filter((d) => d.n >= 3).sort((a, b) => b.n - a.n);
+  }, [demoData]);
 
   if (loading) return <div className="page-loading">Loading dashboard…</div>;
   if (error) return <div className="page-error">Error: {error}</div>;
@@ -150,6 +122,7 @@ export default function Dashboard() {
       </div>
 
       <section className="chart-section">
+        <span className="section-num">01</span>
         <h2>Acceptance rates by tier</h2>
         <p className="section-sub">Each rate shows the number of profiles it's based on. Rates with n &lt; 15 are flagged unreliable.</p>
         <div className="badge-grid">
@@ -170,7 +143,9 @@ export default function Dashboard() {
       </section>
 
       <section className="chart-section">
+        <span className="section-num">02</span>
         <h2>GPA vs SAT equivalent</h2>
+        <div role="img" aria-label={`Scatter plot of GPA versus SAT equivalent for ${stemPoints.length + nonStemPoints.length} applicants, split by STEM and non-STEM majors.`}>
         <ResponsiveContainer width="100%" height={320}>
           <ScatterChart>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -194,44 +169,60 @@ export default function Dashboard() {
                 );
               }} />
             <Scatter name="Non-STEM" data={nonStemPoints} fill="#f59e0b" opacity={0.7}
-              cursor="pointer" onClick={(d) => setSelectedId(d.id)} />
+              shape="diamond" cursor="pointer" onClick={(d) => setSelectedId(d.id)} />
             <Scatter name="STEM" data={stemPoints} fill="#8b8ba0" opacity={0.7}
-              cursor="pointer" onClick={(d) => setSelectedId(d.id)} />
+              shape="circle" cursor="pointer" onClick={(d) => setSelectedId(d.id)} />
           </ScatterChart>
         </ResponsiveContainer>
+        </div>
         <p className="chart-legend">
-          <span className="legend-dot" style={{background:"#8b8ba0"}} /> STEM &nbsp;
-          <span className="legend-dot" style={{background:"#f59e0b"}} /> Non-STEM
+          <span className="legend-dot" style={{background:"#8b8ba0"}} /> ● STEM &nbsp;
+          <span className="legend-dot" style={{background:"#f59e0b", borderRadius:0, transform:"rotate(45deg)"}} /> ◆ Non-STEM
+          &nbsp;·&nbsp; <span style={{color:"var(--text-muted)"}}>click any point to view the profile</span>
         </p>
       </section>
 
-      {demoData.length > 0 && (
+      {demoData && (raceData.length > 0 || genderData.length > 0) && (
         <section className="chart-section">
+          <span className="section-num">03</span>
           <h2>Demographics at a glance</h2>
           <p className="section-sub">
-            T20 acceptance rate by race/ethnicity and gender. Groups with fewer than {MIN_RELIABLE_N} profiles are dimmed.
+            Acceptance rates by race/ethnicity and gender. Groups with fewer than {MIN_RELIABLE_N} profiles are dimmed.
           </p>
           <div className="demo-summary">
-            <div className="demo-summary-col">
-              <h3>Race / Ethnicity</h3>
-              {demoData.map((d) => (
-                <div key={d.label} className={`demo-row ${d.reliable ? "" : "dimmed"}`}>
-                  <span className="demo-label">{d.label}</span>
-                  <span className="demo-n">n={d.n}</span>
-                  <span className="demo-rate">{d.t20_rate !== null ? d.t20_rate + "%" : "—"}</span>
+            {raceData.length > 0 && (
+              <div className="demo-summary-col">
+                <div className="demo-col-header">
+                  <h3>Race / Ethnicity</h3>
+                  <select className="demo-view-select" value={raceView}
+                    onChange={(e) => setRaceView(e.target.value)}>
+                    <option value="grouped">Grouped</option>
+                    <option value="detailed">Detailed</option>
+                  </select>
                 </div>
-              ))}
-            </div>
-            <div className="demo-summary-col">
-              <h3>Gender</h3>
-              {genderData.map((d) => (
-                <div key={d.label} className={`demo-row ${d.reliable ? "" : "dimmed"}`}>
-                  <span className="demo-label">{d.label}</span>
-                  <span className="demo-n">n={d.n}</span>
-                  <span className="demo-rate">{d.t20_rate !== null ? d.t20_rate + "%" : "—"}</span>
+                {raceData.map((d) => (
+                  <div key={d.race} className={`demo-row ${d.reliable ? "" : "dimmed"}`}>
+                    <span className="demo-label">{d.race}</span>
+                    <span className="demo-n">n={d.n}</span>
+                    <span className="demo-rate">{d.t20_accepted != null ? (d.t20_accepted * 100).toFixed(0) + "%" : "—"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {genderData.length > 0 && (
+              <div className="demo-summary-col">
+                <div className="demo-col-header">
+                  <h3>Gender</h3>
                 </div>
-              ))}
-            </div>
+                {genderData.map((d) => (
+                  <div key={d.gender} className={`demo-row ${d.reliable ? "" : "dimmed"}`}>
+                    <span className="demo-label">{d.gender}</span>
+                    <span className="demo-n">n={d.n}</span>
+                    <span className="demo-rate">{d.t20_accepted != null ? (d.t20_accepted * 100).toFixed(0) + "%" : "—"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}

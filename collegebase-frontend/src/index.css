@@ -1,9 +1,10 @@
 /* Global design tokens and base styles — editorial redesign */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
   --font-heading: "Instrument Serif", Georgia, serif;
   --font-body: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --radius: 10px;
   --radius-sm: 6px;
   --radius-lg: 14px;
@@ -26,6 +27,11 @@
   --accent-hover: #ffffff;
   --accent-glow: rgba(228, 228, 239, 0.08);
   --accent-soft: rgba(228, 228, 239, 0.05);
+  /* Signature brand accent — used sparingly on chrome: section numbers,
+     active nav, focus rings. One color, monochrome everywhere else. */
+  --brand: #5eead4;
+  --brand-soft: rgba(94, 234, 212, 0.12);
+  --brand-glow: rgba(94, 234, 212, 0.18);
   --success: #4ade80;
   --success-soft: rgba(74, 222, 128, 0.08);
   --warn: #fbbf24;
@@ -52,6 +58,9 @@
   --accent-hover: #000000;
   --accent-glow: rgba(26, 26, 31, 0.08);
   --accent-soft: rgba(26, 26, 31, 0.05);
+  --brand: #0d9488;
+  --brand-soft: rgba(13, 148, 136, 0.10);
+  --brand-glow: rgba(13, 148, 136, 0.16);
   --success: #16a34a;
   --success-soft: rgba(22, 163, 74, 0.08);
   --warn: #d97706;
@@ -150,8 +159,8 @@ input:hover, select:hover {
 
 input:focus, select:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-glow);
 }
 
 input::placeholder {
@@ -268,7 +277,12 @@ input::placeholder {
   bottom: 6px;
   width: 3px;
   border-radius: 2px;
-  background: var(--text);
+  background: var(--brand);
+  box-shadow: 0 0 10px var(--brand-glow);
+}
+
+.side-rail-links a.active {
+  color: var(--brand);
 }
 
 .side-rail-label {
@@ -701,6 +715,40 @@ input::placeholder {
   color: var(--danger);
 }
 
+/* Recharts bars keep their own color but turn brand-teal on hover.
+   Wrap any BarChart in .ratebar-wrap to opt in (used on Patterns & Schools). */
+.ratebar-wrap .recharts-bar-rectangle { cursor: pointer; }
+.ratebar-wrap .recharts-bar-rectangle .recharts-rectangle {
+  transition: fill 0.15s ease;
+}
+.ratebar-wrap .recharts-bar-rectangle:hover .recharts-rectangle {
+  fill: var(--brand) !important;
+  opacity: 1 !important;
+}
+
+/* Skip-to-content link — visible on keyboard focus (a11y pattern from
+   Brittany Chiang / Hamish Williams portfolios) */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 1000;
+  background: var(--brand);
+  color: #06201c;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  transform: translateY(-150%);
+  transition: transform var(--transition);
+}
+.skip-link:focus {
+  transform: translateY(0);
+  outline: none;
+  text-decoration: none;
+}
+
 /* ===================== PAGE BASE ===================== */
 .page h1 {
   font-family: "Instrument Serif", Georgia, serif;
@@ -834,6 +882,27 @@ input::placeholder {
   margin-bottom: 8px;
 }
 
+/* Monospace numbered eyebrow above section titles (01 / 02 / 03) —
+   borrowed from Brittany Chiang & Hamish Williams' section markers */
+.section-num {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--brand);
+  margin-bottom: 10px;
+}
+.section-num::after {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: var(--brand);
+  opacity: 0.4;
+}
+
 .section-sub {
   color: var(--text-sub);
   font-size: 12px;
@@ -893,7 +962,7 @@ input::placeholder {
 }
 
 .clickable-row:hover {
-  border-left: 3px solid var(--text-muted);
+  border-left: 3px solid var(--brand);
 }
 
 /* Link underline animate in from left */

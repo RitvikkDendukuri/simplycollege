@@ -1,11 +1,3 @@
-"""
-CollegeBase data pipeline. Import-safe, no side effects.
-
-    load_profiles(path)   -> cleaned DataFrame of raw profiles
-    augment_dataframe(df) -> adds derived columns (SAT equivalent, counts,
-                             STEM flag, EC/award categories, t5..t50 flags)
-    process_file(path)    -> load + augment in one call
-"""
 
 import re
 import json
@@ -30,7 +22,7 @@ def normalize_gpa(x):
             if 2.0 <= scaled <= 4.5:
                 return round(scaled, 2)
         return x_float
-    except ValueError:
+    except (TypeError, ValueError):
         return None
 
 def generate_profile_id(profile):
@@ -717,31 +709,44 @@ AWARD_CATEGORY_MAP = {
 }
 
 
+# Compiled (key, pattern) lists, keyed by id(keyword_map) so the ~100+ regexes
+# in EC_CATEGORY_MAP/AWARD_CATEGORY_MAP are built once instead of per row.
+_KEYWORD_PATTERN_CACHE = {}
+
+
+def _get_compiled_keywords(keyword_map):
+    cache_key = id(keyword_map)
+    compiled = _KEYWORD_PATTERN_CACHE.get(cache_key)
+    if compiled is None:
+        # Word-boundary match so 'art' doesn't fire on 'startup'.
+        # Longest key first, so "math olympiad" wins over "olympiad".
+        sorted_keys = sorted(keyword_map.keys(), key=len, reverse=True)
+        compiled = [
+            (key, re.compile(r'\b' + re.escape(key) + r'\b', re.IGNORECASE))
+            for key in sorted_keys
+        ]
+        _KEYWORD_PATTERN_CACHE[cache_key] = compiled
+    return compiled
+
+
 def extract_categories(text_list, keyword_map):
     """Tag each string with the first matching category from the keyword map."""
     categories = set()
     if not isinstance(text_list, list):
         return []
 
-    # Word-boundary match so 'art' doesn't fire on 'startup'.
-    compiled_keys = {
-        key: re.compile(r'\b' + re.escape(key) + r'\b', re.IGNORECASE)
-        for key in keyword_map.keys()
-    }
-
-    # Longest key first, so "math olympiad" wins over "olympiad".
-    sorted_keys = sorted(keyword_map.keys(), key=len, reverse=True)
+    compiled_keys = _get_compiled_keywords(keyword_map)
 
     for item in text_list:
         item_str = str(item)
-        for key in sorted_keys:
-            if compiled_keys[key].search(item_str):
+        for key, pattern in compiled_keys:
+            if pattern.search(item_str):
                 categories.add(keyword_map[key])
                 break
 
     if not categories:
         categories.add("Other")
-        
+
     return sorted(list(categories))
 
  

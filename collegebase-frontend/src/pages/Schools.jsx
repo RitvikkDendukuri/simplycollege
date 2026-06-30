@@ -117,7 +117,9 @@ export default function Schools() {
         onBrowse={browseSchool} />}
 
       <section className="chart-section">
+        <span className="section-num">01</span>
         <h2>Most reported schools (min 5 data points)</h2>
+        <div className="ratebar-wrap">
         <ResponsiveContainer width="100%" height={380}>
           <BarChart data={topChart} layout="vertical" margin={{ left: 180, right: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -142,9 +144,11 @@ export default function Schools() {
             <Bar dataKey="rejected" stackId="a" fill="#ef4444" name="Rejected" radius={[0, 3, 3, 0]} />
           </BarChart>
         </ResponsiveContainer>
+        </div>
       </section>
 
       <section className="chart-section">
+        <span className="section-num">02</span>
         <div className="school-table-header">
           <h2>All schools ({filtered.length})</h2>
           <input className="search-box" placeholder="Search schools..."
