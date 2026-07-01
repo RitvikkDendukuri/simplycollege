@@ -286,6 +286,11 @@ export default function Patterns() {
      { label: "4-5", min: 4, max: 6 }, { label: "6-7", min: 6, max: 8 },
      { label: "8+", min: 8, max: 99 }]);
 
+  const apCountImpact = countImpact(profiles, "ap_classes", tier,
+    [{ label: "0-2", min: 0, max: 3 }, { label: "3-5", min: 3, max: 6 },
+     { label: "6-8", min: 6, max: 9 }, { label: "9-11", min: 9, max: 12 },
+     { label: "12+", min: 12, max: 99 }]);
+
   const ecAdjusted = adjustedCategoryRates(profiles, "ec_categories", tier);
   const awardAdjusted = adjustedCategoryRates(profiles, "award_categories", tier);
 
@@ -349,6 +354,28 @@ export default function Patterns() {
           hatched; hover any cell for its 95% confidence interval.
         </p>
         <AcceptanceHeatmap profiles={profiles} tier={tier} color={TIER_COLORS[tier]} />
+      </section>
+
+      <section className="chart-section">
+        <span className="section-num">04</span>
+        <h2>By AP count {"→"} {tier.toUpperCase()} acceptance</h2>
+        <p className="section-sub">
+          Does taking more APs move the needle? Each bucket shows its average GPA
+          and SAT too — so you can tell whether higher-AP applicants actually do
+          better, or just happen to be stronger students overall.
+        </p>
+        <RateBar data={apCountImpact} tier={tier} />
+        <div className="count-detail">
+          {apCountImpact.map((b) => (
+            <div key={b.label} className="count-stat">
+              <strong>{b.label} APs</strong>
+              <span>n={b.n}</span>
+              <span>{tier.toUpperCase()}: {b.rate ?? "---"}%</span>
+              <span>GPA: {b.avgGpa ?? "---"}</span>
+              <span>SAT: {b.avgSat ?? "---"}</span>
+            </div>
+          ))}
+        </div>
       </section>
       </>}
 

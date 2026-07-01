@@ -18,6 +18,7 @@ const COLS = [
     return isWeighted ? `${v.toFixed(2)}*` : v.toFixed(2);
   }},
   { key: "sat_equivalent", label: "SAT Eq" },
+  { key: "ap_classes", label: "APs" },
   { key: "majors", label: "Majors", render: (v) => v?.join(", ") || "—" },
   { key: "stem_major", label: "STEM", render: (v) => v ? "✓" : "" },
   { key: "num_ecs", label: "ECs" },
@@ -88,13 +89,14 @@ export default function Browser() {
   }
 
   function exportCsv(rows) {
-    const headers = ["ID","GPA","SAT_Eq","Majors","STEM","ECs","Awards","Accepted","T20","T5"];
+    const headers = ["ID","GPA","SAT_Eq","APs","Majors","STEM","ECs","Awards","Accepted","T20","T5"];
     const csvRows = [headers.join(",")];
     rows.forEach((p) => {
       csvRows.push([
         p.applicant_id,
         gpa(p) ?? "",
         p.sat_equivalent ?? "",
+        p.ap_classes ?? "",
         `"${(p.majors || []).join("; ")}"`,
         p.stem_major ? "Yes" : "No",
         p.num_ecs,
